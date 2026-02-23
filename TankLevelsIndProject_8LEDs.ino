@@ -52,7 +52,7 @@ Buzzer buzzer(A5);
 ActUponTimeOut returnHomeScrOnTimeOut;
 ActUponTimeOut charReceiveWaitingTimer;
 ActUponTimeOut charReceiveFinishTimer;
-CalcTimeElapsed slaveModeMainLoopTimer;
+CheckTimeElapsed slaveModeMainLoopTimer;
 
 Tank tank1(0); // EEPROM Address for storing status flags (2 byte alloc req)
 Tank tank2(2); // EEPROM Address for storing status flags (2 byte alloc req)
@@ -174,7 +174,7 @@ void loop() {
     slaveModeMainLoopTimer.startTimer();
     while(true){
       MACRO_BUTT_SCANS();
-      if(slaveModeMainLoopTimer.getTimeElapsedMilSec() > diffTime)
+      if(slaveModeMainLoopTimer.isTimeElapsed(diffTime))
         break;
     } // infinite while
   }

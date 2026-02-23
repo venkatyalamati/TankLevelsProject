@@ -98,7 +98,7 @@ void convertLevelsToChar_And_Transmit(){
 }
 
 void clearSerialBuffer(){
-  CalcTimeElapsed localTimer;
+  CheckTimeElapsed localTimer;
   localTimer.startTimer();
   while(true){
     if(Serial.available()){
@@ -106,7 +106,7 @@ void clearSerialBuffer(){
       localTimer.startTimer();
     }
   
-    if(localTimer.getTimeElapsedMilSec() > 1000){
+    if(localTimer.isTimeElapsed(1000)){
       break;
     }
   } // infinite while
