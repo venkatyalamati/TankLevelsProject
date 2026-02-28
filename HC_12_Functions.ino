@@ -98,16 +98,12 @@ void convertLevelsToChar_And_Transmit(){
 }
 
 void clearSerialBuffer(){
-  CheckTimeElapsed localTimer;
+  NonBlockingTimer localTimer;
   localTimer.startTimer();
-  while(true){
+  while(!localTimer.isTimeElapsed(1000)){
     if(Serial.available()){
       Serial.read(); // Discard all existing data
       localTimer.startTimer();
     }
-  
-    if(localTimer.isTimeElapsed(1000)){
-      break;
-    }
-  } // infinite while
+  } // while
 }

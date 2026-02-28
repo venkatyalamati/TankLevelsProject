@@ -9,6 +9,7 @@ int intLevel;
     }
     else{
       strcpy_P(arr8, (PGM_P)F("LEVELS-S")); textPrintOnTFT_BigFont(arr8, 1.0);
+      clearSerialBuffer(); // fullPage and slave mode
     }
   }
   // ----------- 1st Tank ------------------ 

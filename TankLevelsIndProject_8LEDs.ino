@@ -49,10 +49,10 @@ Ucglib_ST7735_18x128x160_HWSPI ucg(/*cd=*/ 10, /*cs=*/ -1, /*reset=*/ 9); //CS -
 extern const unsigned int TIMER1_PERIOD_MILLSEC;
 Ticks tik_800ms(800); Ticks tik_1600ms(1600); Ticks tik_1000ms(1000); Ticks tik_main_loop_cycle(MAIN_LOOP_CYCLE_PERIOD);
 Buzzer buzzer(A5);
-ActUponTimeOut returnHomeScrOnTimeOut;
-ActUponTimeOut charReceiveWaitingTimer;
-ActUponTimeOut charReceiveFinishTimer;
-CheckTimeElapsed slaveModeMainLoopTimer;
+NonBlockingTimer returnHomeScrOnTimeOut;
+NonBlockingTimer charReceiveWaitingTimer;
+NonBlockingTimer charReceiveFinishTimer;
+NonBlockingTimer slaveModeMainLoopTimer;
 
 Tank tank1(0); // EEPROM Address for storing status flags (2 byte alloc req)
 Tank tank2(2); // EEPROM Address for storing status flags (2 byte alloc req)
@@ -71,7 +71,7 @@ navigations currPage; deviceModes deviceMode;
 float levelsPercentageFloat[2]; byte tankSel, numBeepsOnAlarm, beepLenMidLvl;
 char levelsPercentageChar[7];
 
-char buffer[bufferSize]; unsigned int diffTime;
+char buffer[bufferSize];
 
 #define MACRO_BUTT_SCANS()              \
   if(currPage == dashBoardPage){        \
@@ -139,7 +139,7 @@ void loop() {
 
   if((deviceMode == slaveMode) && (currPage == dashBoardPage || currPage == noSgnlRcvdPage)){
     receiveCharLevels_And_Convert();
-    slaveModeMainLoopTimer.startTimer();
+    slaveModeMainLoopTimer.startTimer(MAIN_LOOP_CYCLE_PERIOD);
   }
 
   MACRO_BUTT_SCANS();
@@ -169,23 +169,15 @@ void loop() {
   }
 
   if(deviceMode == slaveMode && currPage == dashBoardPage){
-    diffTime = slaveModeMainLoopTimer.getTimeElapsedMilSec();
-    diffTime = MAIN_LOOP_CYCLE_PERIOD - diffTime - 1000;
-    slaveModeMainLoopTimer.startTimer();
-    while(true){
+    while(!slaveModeMainLoopTimer.checkTimeOut()){
       MACRO_BUTT_SCANS();
-      if(slaveModeMainLoopTimer.isTimeElapsed(diffTime))
-        break;
-    } // infinite while
+    } // while
   }
 
   if(returnHomeScrOnTimeOut.checkTimeOut()){
     loadDeviceModeSetting();
     loadBeepSettings();
     displayHomePage(fullPage);
-    if(deviceMode == slaveMode){
-      clearSerialBuffer();
-    }
   }
   
 } // ------------------------------------------------- main loop ends ----------------------------------------------
@@ -200,10 +192,10 @@ void loop() {
 #endif
 
 void blinkLEDsInSeq(){
-  byte i; byte ledStatus[8];
-  for(i=0; i<8; i++)
+  uint8_t ledStatus[8];
+  for(uint8_t i=0; i<8; i++)
     ledStatus[i] = 0;
-  for(i=0; i<8; i++){
+  for(uint8_t i=0; i<8; i++){
     ledStatus[i] = 1;
     shiftOutDOsPort1.updateOutputs(ledStatus);
     shiftOutDOsPort2.updateOutputs(ledStatus);
@@ -212,10 +204,10 @@ void blinkLEDsInSeq(){
 }
 
 void blinkLEDs_usingTimerISR(){
-  byte i; byte ledStatus[8];
+  uint8_t ledStatus[8];
   LED_Num_Cir_Cnt.enableCnt();
   if(LED_Num_Cir_Cnt.checkJustIncr()){
-    for(i=0; i<8; i++){
+    for(uint8_t i=0; i<8; i++){
       if(i==LED_Num_Cir_Cnt.count)
         ledStatus[i] = 1;
       else
@@ -227,8 +219,8 @@ void blinkLEDs_usingTimerISR(){
 }
 
 void clearAll_LEDs(){
-  byte i; byte ledStatus[8];
-  for(i=0; i<8; i++){
+  uint8_t ledStatus[8];
+  for(uint8_t i=0; i<8; i++){
     ledStatus[i] = 0;
   }
   LED_Num_Cir_Cnt.disableCnt();
