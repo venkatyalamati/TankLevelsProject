@@ -36,7 +36,7 @@
 #define EEPROM_ADDR_MEMORY_VALID_STRING 1000
 
 #define bufferSize 14
-const unsigned int MAIN_LOOP_CYCLE_PERIOD = 10000; // in milli seconds
+constexpr unsigned int MAIN_LOOP_CYCLE_PERIOD = 10000; // in milli seconds
 
 enum navigations {dashBoardPage, slctTankPage, calSensorPage, setNumBeepsPage, setMidLvlBeepLenPage, showMessagePage, setDeviceModePage, noSgnlRcvdPage};
 enum diplayPages {fullPage, updtValues}; enum deviceModes {masterMode, slaveMode};
@@ -139,7 +139,7 @@ void loop() {
 
   if((deviceMode == slaveMode) && (currPage == dashBoardPage || currPage == noSgnlRcvdPage)){
     receiveCharLevels_And_Convert();
-    slaveModeMainLoopTimer.startTimer(MAIN_LOOP_CYCLE_PERIOD);
+    slaveModeMainLoopTimer.startTimer(MAIN_LOOP_CYCLE_PERIOD-500);
   }
 
   MACRO_BUTT_SCANS();
@@ -169,12 +169,12 @@ void loop() {
   }
 
   if(deviceMode == slaveMode && currPage == dashBoardPage){
-    while(!slaveModeMainLoopTimer.checkTimeOut()){
+    while(!slaveModeMainLoopTimer.checkTimeOut(false)){
       MACRO_BUTT_SCANS();
     } // while
   }
 
-  if(returnHomeScrOnTimeOut.checkTimeOut()){
+  if(returnHomeScrOnTimeOut.checkTimeOut(false)){
     loadDeviceModeSetting();
     loadBeepSettings();
     displayHomePage(fullPage);

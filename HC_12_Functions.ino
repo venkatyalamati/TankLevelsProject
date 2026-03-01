@@ -54,15 +54,14 @@ void receiveCharLevels_And_Convert(){ //Rx: -28.57-28.57
     } // if(Serial.available()) ends
 
     if(charReceiveFinishTimer.isTimerRunning()){
-      if(charReceiveFinishTimer.checkTimeOut()){
+      if(charReceiveFinishTimer.checkTimeOut(false)){
         for(uint8_t i = 0; i < bufferSize; i++)
           buffer[i] = '\0';
-        j = 0;
-        
+        j = 0; 
       }
     }
     else if(charReceiveWaitingTimer.isTimerRunning()){
-      if(charReceiveWaitingTimer.checkTimeOut()){
+      if(charReceiveWaitingTimer.checkTimeOut(false)){
         displaySignalNotRcvd();
       }
     }
@@ -99,11 +98,11 @@ void convertLevelsToChar_And_Transmit(){
 
 void clearSerialBuffer(){
   NonBlockingTimer localTimer;
-  localTimer.startTimer();
-  while(!localTimer.isTimeElapsed(1000)){
+  localTimer.startTimer(1000);
+  while(!localTimer.checkTimeOut(false)){
     if(Serial.available()){
       Serial.read(); // Discard all existing data
-      localTimer.startTimer();
+      localTimer.restartTimer();
     }
   } // while
 }
