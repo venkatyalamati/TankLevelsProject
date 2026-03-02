@@ -23,7 +23,7 @@ void actionOnButtonPress(byte pinNum){
         delay(10);
       }
       else{
-        returnHomeScrOnTimeOut.forceTimeOut();
+        returnHomeScreenTimer.forceExpire();
       }
       break;
     case LHS_BUT_PIN:

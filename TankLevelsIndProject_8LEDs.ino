@@ -49,9 +49,9 @@ Ucglib_ST7735_18x128x160_HWSPI ucg(/*cd=*/ 10, /*cs=*/ -1, /*reset=*/ 9); //CS -
 extern const unsigned int TIMER1_PERIOD_MILLSEC;
 Ticks tik_800ms(800); Ticks tik_1600ms(1600); Ticks tik_1000ms(1000); Ticks tik_main_loop_cycle(MAIN_LOOP_CYCLE_PERIOD);
 Buzzer buzzer(A5);
-NonBlockingTimer returnHomeScrOnTimeOut;
-NonBlockingTimer charReceiveWaitingTimer;
-NonBlockingTimer charReceiveFinishTimer;
+NonBlockingTimer returnHomeScreenTimer;
+NonBlockingTimer charReceiveMainTimer;
+NonBlockingTimer charReceiveSubTimer;
 NonBlockingTimer slaveModeMainLoopTimer;
 
 Tank tank1(0); // EEPROM Address for storing status flags (2 byte alloc req)
@@ -139,7 +139,7 @@ void loop() {
 
   if((deviceMode == slaveMode) && (currPage == dashBoardPage || currPage == noSgnlRcvdPage)){
     receiveCharLevels_And_Convert();
-    slaveModeMainLoopTimer.startTimer(MAIN_LOOP_CYCLE_PERIOD-500);
+    slaveModeMainLoopTimer.start(TimerModes::finOneShot, MAIN_LOOP_CYCLE_PERIOD-500);
   }
 
   MACRO_BUTT_SCANS();
@@ -169,12 +169,12 @@ void loop() {
   }
 
   if(deviceMode == slaveMode && currPage == dashBoardPage){
-    while(!slaveModeMainLoopTimer.checkTimeOut(false)){
+    while(!slaveModeMainLoopTimer.event()){
       MACRO_BUTT_SCANS();
     } // while
   }
 
-  if(returnHomeScrOnTimeOut.checkTimeOut(false)){
+  if(returnHomeScreenTimer.event()){
     loadDeviceModeSetting();
     loadBeepSettings();
     displayHomePage(fullPage);

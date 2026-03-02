@@ -54,7 +54,7 @@ void displaySlctTankPage(){
   strcpy_P(arr16, (PGM_P)F("Tank1      Tank2")); textPrintOnTFT_SmallFont(arr16, 6);
   //toDispOLED();
   currPage = slctTankPage;
-  returnHomeScrOnTimeOut.startTimer(30000);
+  returnHomeScreenTimer.start(TimerModes::finOneShot, 30000);
 }
 
 void displayCalibSensorPage(){
@@ -67,7 +67,7 @@ void displayCalibSensorPage(){
   strcpy_P(arr16, (PGM_P)F("EMPTY       FULL")); textPrintOnTFT_SmallFont(arr16, 6);
   //toDispOLED();
   currPage = calSensorPage;
-  returnHomeScrOnTimeOut.startTimer(30000);
+  returnHomeScreenTimer.start(TimerModes::finOneShot, 30000);
 }
 
 void displayCalibDone_EmptyLevel(){
@@ -80,7 +80,7 @@ void displayCalibDone_EmptyLevel(){
   strcpy_P(arr16, (PGM_P)F("   EMPTY (0%)   ")); textPrintOnTFT_SmallFont(arr16, 6);
   //toDispOLED();
   currPage = showMessagePage;
-  returnHomeScrOnTimeOut.startTimer(8000);
+  returnHomeScreenTimer.start(TimerModes::finOneShot, 8000);
 }
 
 void displayCalibDone_FullLevel(){
@@ -93,7 +93,7 @@ void displayCalibDone_FullLevel(){
   strcpy_P(arr16, (PGM_P)F("   FULL (100%)  ")); textPrintOnTFT_SmallFont(arr16, 6);
   //toDispOLED();
   currPage = showMessagePage;
-  returnHomeScrOnTimeOut.startTimer(8000);
+  returnHomeScreenTimer.start(TimerModes::finOneShot, 8000);
 }
 
 void displaySetNumBeeps(byte diplayPageType){
@@ -119,7 +119,7 @@ void displaySetNumBeeps(byte diplayPageType){
   }
   //toDispOLED();
   currPage = setNumBeepsPage;
-  returnHomeScrOnTimeOut.startTimer(20000);
+  returnHomeScreenTimer.start(TimerModes::finOneShot, 20000);
 }
 
 void displayNumBeepsSetDone(){
@@ -141,7 +141,7 @@ void displayNumBeepsSetDone(){
   textPrintOnTFT_SmallFont(arr16, 5);
   strcpy_P(arr16, (PGM_P)F("<<<<<<<  >>>>>>>")); textPrintOnTFT_SmallFont(arr16, 6);
   currPage = showMessagePage;
-  returnHomeScrOnTimeOut.startTimer(8000);
+  returnHomeScreenTimer.start(TimerModes::finOneShot, 8000);
 }
 
 void displaySetBeepLenMidLvls(byte diplayPageType){
@@ -168,7 +168,7 @@ void displaySetBeepLenMidLvls(byte diplayPageType){
   }
   //toDispOLED();
   currPage = setMidLvlBeepLenPage;
-  returnHomeScrOnTimeOut.startTimer(20000);
+  returnHomeScreenTimer.start(TimerModes::finOneShot, 20000);
 }
 
 void displayBeepLenMidLvlsSetDone(){
@@ -190,7 +190,7 @@ void displayBeepLenMidLvlsSetDone(){
   strcpy_P(arr16, (PGM_P)F("   milli sec's  ")); textPrintOnTFT_SmallFont(arr16, 5);
   strcpy_P(arr16, (PGM_P)F("<<<<<<<  >>>>>>>")); textPrintOnTFT_SmallFont(arr16, 6);
   currPage = showMessagePage;
-  returnHomeScrOnTimeOut.startTimer(8000);
+  returnHomeScreenTimer.start(TimerModes::finOneShot, 8000);
 }
 
 void displaySetDeviceModePage(byte diplayPageType){
@@ -212,7 +212,7 @@ void displaySetDeviceModePage(byte diplayPageType){
   }
   //toDispOLED();
   currPage = setDeviceModePage;
-  returnHomeScrOnTimeOut.startTimer(8000);
+  returnHomeScreenTimer.start(TimerModes::finOneShot, 8000);
 }
 
 void displayDeviceModeSetDone(){
@@ -231,7 +231,7 @@ void displayDeviceModeSetDone(){
   strcpy_P(arr16, (PGM_P)F("<<<<<<<  >>>>>>>")); textPrintOnTFT_SmallFont(arr16, 6);
 
   currPage = showMessagePage;
-  returnHomeScrOnTimeOut.startTimer(8000);
+  returnHomeScreenTimer.start(TimerModes::finOneShot, 8000);
 }
 
 void textPrintOnTFT_SmallFont(char txtLine[], byte linePos){ // 13 char max, linPos 1,2,3..

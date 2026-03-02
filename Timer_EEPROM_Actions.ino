@@ -3,6 +3,7 @@
   ISR(TIMER1_COMPA_vect){ // runs after every Timer1Period
 
     buzzer.timedTurnOff();
+    returnHomeScreenTimer.update(); charReceiveMainTimer.update(); charReceiveSubTimer.update(); slaveModeMainLoopTimer.update();
 
     if(tik_800ms.tick_Gen_Run()){ //tik_ms tasks must be kept in increasing order of milli sec's
       if(tank1.ledBlinkAct.switchOff())
