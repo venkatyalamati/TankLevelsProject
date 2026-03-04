@@ -4,12 +4,12 @@ void receiveCharLevels_And_Convert(){ //Rx: -28.57-28.57
   for (uint8_t i = 0; i < bufferSize; i++)
     buffer[i] = '\0';
   if(currPage == dashBoardPage)
-    charReceiveMainTimer.start(TimerModes::finOneShot, MAIN_LOOP_CYCLE_PERIOD+2000);
+    charReceiveMainTimer.start_finOneShot(MAIN_LOOP_CYCLE_PERIOD+2000);
   j=0;
   while(true){
   // Check for available data from HC-12
     if(Serial.available()){
-      charReceiveSubTimer.start(TimerModes::finOneShot, 1000);
+      charReceiveSubTimer.start_finOneShot(1000);
       
       if(j < (bufferSize-1)){ // bcz 'j' will have range between '0' to 'bufferSize-2' (last char will be null)
         // Store character if buffer isn't full
@@ -93,7 +93,7 @@ void convertLevelsToChar_And_Transmit(){
 }
 
 void clearSerialBuffer(){
-  charReceiveSubTimer.start(TimerModes::finOneShot, 1000);
+  charReceiveSubTimer.start_finOneShot(1000);
   while(!charReceiveSubTimer.event()){
     if(Serial.available()){
       Serial.read(); // Discard all existing data

@@ -38,8 +38,8 @@
 #define bufferSize 14
 constexpr unsigned int MAIN_LOOP_CYCLE_PERIOD = 10000; // in milli seconds
 
-enum navigations {dashBoardPage, slctTankPage, calSensorPage, setNumBeepsPage, setMidLvlBeepLenPage, showMessagePage, setDeviceModePage, noSgnlRcvdPage};
-enum diplayPages {fullPage, updtValues}; enum deviceModes {masterMode, slaveMode};
+enum navigations : uint8_t {dashBoardPage, slctTankPage, calSensorPage, setNumBeepsPage, setMidLvlBeepLenPage, showMessagePage, setDeviceModePage, noSgnlRcvdPage};
+enum diplayPages : uint8_t {fullPage, updtValues}; enum deviceModes : uint8_t {masterMode, slaveMode};
 
 // ------------------------------------------------- global variables ----------------------------------------------
 
@@ -139,7 +139,7 @@ void loop() {
 
   if((deviceMode == slaveMode) && (currPage == dashBoardPage || currPage == noSgnlRcvdPage)){
     receiveCharLevels_And_Convert();
-    slaveModeMainLoopTimer.start(TimerModes::finOneShot, MAIN_LOOP_CYCLE_PERIOD-500);
+    slaveModeMainLoopTimer.start_finOneShot(MAIN_LOOP_CYCLE_PERIOD-500);
   }
 
   MACRO_BUTT_SCANS();
