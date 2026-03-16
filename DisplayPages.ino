@@ -28,7 +28,6 @@ int intLevel;
     textPrintOnTFT_BigFont(arr8, 3.70); 
 //----------------------------------------
     currPage = dashBoardPage;
-
 }
 
 void displaySignalNotRcvd(){

@@ -36,7 +36,7 @@
 #define EEPROM_ADDR_MEMORY_VALID_STRING 1000
 
 #define bufferSize 14
-constexpr unsigned int MAIN_LOOP_CYCLE_PERIOD = 10000; // in milli seconds
+constexpr uint16_t MAIN_LOOP_CYCLE_PERIOD = 10000; // in milli seconds
 
 enum navigations : uint8_t {dashBoardPage, slctTankPage, calSensorPage, setNumBeepsPage, setMidLvlBeepLenPage, showMessagePage, setDeviceModePage, noSgnlRcvdPage};
 enum diplayPages : uint8_t {fullPage, updtValues}; enum deviceModes : uint8_t {masterMode, slaveMode};
@@ -46,7 +46,6 @@ enum diplayPages : uint8_t {fullPage, updtValues}; enum deviceModes : uint8_t {m
 //Ucglib_ST7735_18x128x160_SWSPI ucg(/*sclk=*/ 5, /*data=*/ 4, /*cd=*/ 3, /*cs=*/ -1, /*reset=*/ 2); //CS -> GND
 Ucglib_ST7735_18x128x160_HWSPI ucg(/*cd=*/ 10, /*cs=*/ -1, /*reset=*/ 9); //CS -> GND, Pin 12(MISO) cannot be used for any purpose
 
-extern const unsigned int TIMER1_PERIOD_MILLSEC;
 Ticks tik_800ms(800); Ticks tik_1600ms(1600); Ticks tik_1000ms(1000); Ticks tik_main_loop_cycle(MAIN_LOOP_CYCLE_PERIOD);
 Buzzer buzzer(A5);
 NonBlockingTimer returnHomeScreenTimer;
@@ -63,32 +62,46 @@ LevelSensor levelSensor2(A7, 30); // EEPROM Address for storing calibration para
 ShiftRegisterController shiftOutDOsPort1(6, A0, 4, 5); // OE pin, latch pin, data pin, clock pin
 ShiftRegisterController shiftOutDOsPort2(7, A1, 4, 5); // OE pin, latch pin, data pin, clock pin
 
+PreemptiveOnOff tank1AlarmOnOff(1600, 50);
+PreemptiveOnOff tank2AlarmOnOff(1600, 50);
+
 CircularCounter LED_Num_Cir_Cnt(8); // for 8 No's LEDs
 
 char arr16[17]; char arr8[9];
 navigations currPage; deviceModes deviceMode;
 
-float levelsPercentageFloat[2]; byte tankSel, numBeepsOnAlarm, beepLenMidLvl;
+float levelsPercentageFloat[2]; uint8_t tankSel, numBeepsOnAlarm, beepLenMidLvl;
 char levelsPercentageChar[7];
 
 char buffer[bufferSize];
 
-#define MACRO_BUTT_SCANS()              \
-  if(currPage == dashBoardPage){        \
-    readButtonLongPress(MID_BUT_PIN);   \
-    readButtonLongPress(LHS_BUT_PIN);   \
-    readButtonLongPress(RHS_BUT_PIN);   \
-    readButtonLongPress(MODE_SET_BUT_PIN);  \
-  }                                     \
-  else{                                 \
-    readButton(MID_BUT_PIN);            \
-    readButton(LHS_BUT_PIN);            \
-    readButton(RHS_BUT_PIN);            \
-  }
+// Here the compiler allocating actual memory for the static variables. This is allowed even for private scope variables of the class.
+// static keyword only in declaration inside class — never repeat it in definition outside class.
+volatile uint16_t ButtonTimer2Based::timer2_isr_tick = 0; // All unsigned integer types wrap around correctly in C++
+volatile uint16_t ButtonTimer2Based::debounceTicks = 255;
+volatile uint8_t ButtonTimer2Based::pinButtPressed = 255;
+
+ButtonTimer2Based mid_but_pin(MID_BUT_PIN);
+ButtonTimer2Based lhs_but_pin(LHS_BUT_PIN);
+ButtonTimer2Based rhs_but_pin(RHS_BUT_PIN);
+ButtonTimer2Based mode_set_but_pin(MODE_SET_BUT_PIN);
+
+// #define MACRO_BUTT_SCANS()              \
+//   if(currPage == dashBoardPage){        \
+//     readButtonLongPress(MID_BUT_PIN);   \
+//     readButtonLongPress(LHS_BUT_PIN);   \
+//     readButtonLongPress(RHS_BUT_PIN);   \
+//     readButtonLongPress(MODE_SET_BUT_PIN);  \
+//   }                                     \
+//   else{                                 \
+//     readButton(MID_BUT_PIN);            \
+//     readButton(LHS_BUT_PIN);            \
+//     readButton(RHS_BUT_PIN);            \
+//   }
 // ----------------------------------------------------- Setup ------------------------------------------------------
 void setup() {   // put your setup code here, to run once:
   delay(500);
-
+  
   #if DEBUG_SERIAL_PRINT
     Serial.begin(115200);
   #else
@@ -97,10 +110,16 @@ void setup() {   // put your setup code here, to run once:
   sei();//allow interrupts
   analogReference(EXTERNAL); delay(500);
   
-  pinMode(MID_BUT_PIN, INPUT_PULLUP);
-  pinMode(LHS_BUT_PIN, INPUT_PULLUP);
-  pinMode(RHS_BUT_PIN, INPUT_PULLUP);
-  pinMode(MODE_SET_BUT_PIN, INPUT_PULLUP);
+  mid_but_pin.setPinMode();
+  lhs_but_pin.setPinMode();
+  rhs_but_pin.setPinMode();
+  mode_set_but_pin.setPinMode();
+
+  tank1.doStartUpActions();
+  tank2.doStartUpActions();
+
+  shiftOutDOsPort1.doStartUpActions();
+  shiftOutDOsPort2.doStartUpActions();
 
   arr16[16] = '\0'; arr8[8] = '\0';
   ucg.begin(UCG_FONT_MODE_SOLID);
@@ -123,7 +142,7 @@ void setup() {   // put your setup code here, to run once:
   
   displayHomePage(fullPage); blinkLEDsInSeq();
 
-  setupTimer1(); enableTimer1_Int();
+  setupTimer1(); enableTimer1(); setupTimer2(); enableTimer2();
   tik_main_loop_cycle.force_Gen_Tick();
   
   //wdt_enable(WDTO_8S);
@@ -131,9 +150,16 @@ void setup() {   // put your setup code here, to run once:
 // ------------------------------------------------------ loop --------------------------------------------------------
 void loop() {
   //put your main code here, to run repeatedly:
+  if(currPage == dashBoardPage){
+    ButtonTimer2Based::setDebLongPress();
+  }
+  else{
+    ButtonTimer2Based::setDebNormPress();
+  }
+
   if(deviceMode == masterMode && currPage == dashBoardPage){
     while(!tik_main_loop_cycle.tick_Utilize()){
-      MACRO_BUTT_SCANS();
+      actionOnButtonPress(ButtonTimer2Based::pinButtPressed); //MACRO_BUTT_SCANS();
     }
   }
 
@@ -142,22 +168,26 @@ void loop() {
     slaveModeMainLoopTimer.start_finOneShot(MAIN_LOOP_CYCLE_PERIOD-500);
   }
 
-  MACRO_BUTT_SCANS();
+  actionOnButtonPress(ButtonTimer2Based::pinButtPressed); //MACRO_BUTT_SCANS();
   
   if(deviceMode == masterMode && currPage == dashBoardPage)
     levelsPercentageFloat[0] = levelSensor1.getTankLevelPercent();
-  if(currPage == dashBoardPage)
+  if(currPage == dashBoardPage){
     tank1.actionsOnLevel(levelsPercentageFloat[0]);
-  
-  MACRO_BUTT_SCANS();
+    if(tank1.getStartAlarmOrder()) tank1AlarmOnOff.start(numBeepsOnAlarm);
+    if(tank1.getStopAlarmOrder()) tank1AlarmOnOff.stop();
+  }
+  actionOnButtonPress(ButtonTimer2Based::pinButtPressed); //MACRO_BUTT_SCANS();
   
   if(deviceMode == masterMode && currPage == dashBoardPage){
     levelsPercentageFloat[1] = levelSensor2.getTankLevelPercent();
   }
-  if(currPage == dashBoardPage)
-    tank2.actionsOnLevel(levelsPercentageFloat[1]);    
-  
-  MACRO_BUTT_SCANS();
+  if(currPage == dashBoardPage){
+    tank2.actionsOnLevel(levelsPercentageFloat[1]);
+    if(tank2.getStartAlarmOrder()) tank2AlarmOnOff.start(numBeepsOnAlarm);
+    if(tank2.getStopAlarmOrder()) tank2AlarmOnOff.stop();
+  }
+  actionOnButtonPress(ButtonTimer2Based::pinButtPressed); //MACRO_BUTT_SCANS();
 
   if(deviceMode == masterMode && currPage == dashBoardPage){
     convertLevelsToChar_And_Transmit();
@@ -170,7 +200,7 @@ void loop() {
 
   if(deviceMode == slaveMode && currPage == dashBoardPage){
     while(!slaveModeMainLoopTimer.event()){
-      MACRO_BUTT_SCANS();
+      actionOnButtonPress(ButtonTimer2Based::pinButtPressed); //MACRO_BUTT_SCANS();
     } // while
   }
 

@@ -1,4 +1,4 @@
-void actionOnButtonPress(byte pinNum){
+void actionOnButtonPress(uint8_t pinNum){
   switch(pinNum) {
     case MID_BUT_PIN:
       if(currPage == dashBoardPage){
@@ -106,6 +106,8 @@ void actionOnButtonPress(byte pinNum){
       // code to be executed if none of the above cases are true
       break;
     }
+    ButtonTimer2Based::pinButtPressed = 255;
+    
 }
 
 void readButton(byte pinNum){

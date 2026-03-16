@@ -1,41 +1,58 @@
  #include <EEPROM.h>
  
-  ISR(TIMER1_COMPA_vect){ // runs after every Timer1Period
+  ISR(TIMER1_COMPA_vect){ // runs every TIMER1_PERIOD_MILLSEC
 
     buzzer.timedTurnOff();
     returnHomeScreenTimer.update(); charReceiveMainTimer.update(); charReceiveSubTimer.update(); slaveModeMainLoopTimer.update();
 
-    if(tik_800ms.tick_Gen_Run()){ //tik_ms tasks must be kept in increasing order of milli sec's
-      if(tank1.ledBlinkAct.switchOff())
-        shiftOutDOsPort1.disableOutput();
-
-      if(tank2.ledBlinkAct.switchOff())
-        shiftOutDOsPort2.disableOutput();
-
-      if(!tank1.alarmInProgress && !tank2.alarmInProgress){
-        if(tank1.beepForMidLevels || tank2.beepForMidLevels){
-          tank1.beepForMidLevels = false; tank2.beepForMidLevels = false;
+    if(tik_1000ms.tick_Gen_Run()){ //tik_ms tasks must be kept in increasing order of milli sec's
+      LED_Num_Cir_Cnt.incrCnt();
+      if(!tank1.isAlarmInProgress() && !tank2.isAlarmInProgress()){
+        if(tank1.beepForMidLvlChanges() || tank2.beepForMidLvlChanges()){
           buzzer.turnOn(beepLenMidLvl);
         }
       }
     }
 
-    if(tik_1000ms.tick_Gen_Run()){
-      LED_Num_Cir_Cnt.incrCnt();
-    }
-
-    if(tik_1600ms.tick_Gen_Run()){
-      if(tank1.ledBlinkAct.switchOn()||tank2.ledBlinkAct.switchOn()){
-        buzzer.turnOn(5);
-      }
-      shiftOutDOsPort1.enableOutput();
-      shiftOutDOsPort2.enableOutput();
-    }
+    tank1AlarmOnOff.executor(tank1_alarm_On_action, tank1_alarm_Off_action, tank1_alarm_fin_action);
+    tank2AlarmOnOff.executor(tank2_alarm_On_action, tank2_alarm_Off_action, tank2_alarm_fin_action);
 
     if(deviceMode == masterMode && currPage == dashBoardPage)
       tik_main_loop_cycle.tick_Gen_Run();
 
-  } // ISR ends
+  } // ISR(TIMER1_COMPA_vect) ends
+
+  void tank1_alarm_On_action(){
+    buzzer.turnOn(5); shiftOutDOsPort1.enableOutput();
+  }
+  void tank1_alarm_Off_action(){
+    shiftOutDOsPort1.disableOutput();
+  }
+  void tank1_alarm_fin_action(){
+    shiftOutDOsPort1.enableOutput();
+    tank1.setAlarmStatusFinished();
+  }
+
+  void tank2_alarm_On_action(){
+    buzzer.turnOn(5); shiftOutDOsPort2.enableOutput();
+  }
+  void tank2_alarm_Off_action(){
+    shiftOutDOsPort2.disableOutput();
+  }
+  void tank2_alarm_fin_action(){
+    shiftOutDOsPort2.enableOutput();
+    tank2.setAlarmStatusFinished();
+  }
+
+  ISR(TIMER2_COMPA_vect) { // runs every TIMER2_PERIOD_MILLSEC
+    ButtonTimer2Based::timer2_isr_tick++;
+    if(currPage == dashBoardPage){
+      mode_set_but_pin.scanButton();
+    }
+    mid_but_pin.scanButton();
+    lhs_but_pin.scanButton();
+    rhs_but_pin.scanButton();
+  } // ISR(TIMER2_COMPA_vect) ends
 
   // -------------- EEPROM related functions ---------------
   
