@@ -1,9 +1,5 @@
-//#include <avr/wdt.h>
-#include <SPI.h>
 #include <EEPROM.h>
 #include "CustomClasses.h"
-#include <Ucglib.h>
-#include <UtilityFunctions.h>
 #include <UtilityClasses.h>
 /*--------------------------------------------------- instructions --------------------------------------------------
 1. HC-12 Set Pin must be connected to Vcc for regular transmission or receive
@@ -43,8 +39,7 @@ enum diplayPages : uint8_t {fullPage, updtValues}; enum deviceModes : uint8_t {m
 
 // ------------------------------------------------- global variables ----------------------------------------------
 
-//Ucglib_ST7735_18x128x160_SWSPI ucg(/*sclk=*/ 5, /*data=*/ 4, /*cd=*/ 3, /*cs=*/ -1, /*reset=*/ 2); //CS -> GND
-Ucglib_ST7735_18x128x160_HWSPI ucg(/*cd=*/ 10, /*cs=*/ -1, /*reset=*/ 9); //CS -> GND, Pin 12(MISO) cannot be used for any purpose
+TFTDisplay tftST7735(10, 9);
 
 Ticks tik_800ms(800); Ticks tik_1600ms(1600); Ticks tik_1000ms(1000); Ticks tik_main_loop_cycle(MAIN_LOOP_CYCLE_PERIOD);
 Buzzer buzzer(A5);
@@ -67,7 +62,6 @@ PreemptiveOnOff tank2AlarmOnOff(1600, 50);
 
 CircularCounter LED_Num_Cir_Cnt(8); // for 8 No's LEDs
 
-char arr16[17]; char arr8[9];
 navigations currPage; deviceModes deviceMode;
 
 float levelsPercentageFloat[2]; uint8_t tankSel, numBeepsOnAlarm, beepLenMidLvl;
@@ -86,21 +80,9 @@ ButtonTimer2Based lhs_but_pin(LHS_BUT_PIN);
 ButtonTimer2Based rhs_but_pin(RHS_BUT_PIN);
 ButtonTimer2Based mode_set_but_pin(MODE_SET_BUT_PIN);
 
-// #define MACRO_BUTT_SCANS()              \
-//   if(currPage == dashBoardPage){        \
-//     readButtonLongPress(MID_BUT_PIN);   \
-//     readButtonLongPress(LHS_BUT_PIN);   \
-//     readButtonLongPress(RHS_BUT_PIN);   \
-//     readButtonLongPress(MODE_SET_BUT_PIN);  \
-//   }                                     \
-//   else{                                 \
-//     readButton(MID_BUT_PIN);            \
-//     readButton(LHS_BUT_PIN);            \
-//     readButton(RHS_BUT_PIN);            \
-//   }
 // ----------------------------------------------------- Setup ------------------------------------------------------
 void setup() {   // put your setup code here, to run once:
-  delay(500);
+  delay(1000);
   
   #if DEBUG_SERIAL_PRINT
     Serial.begin(115200);
@@ -108,7 +90,7 @@ void setup() {   // put your setup code here, to run once:
     Serial.begin(1200);
   #endif
   sei();//allow interrupts
-  analogReference(EXTERNAL); delay(500);
+  analogReference(EXTERNAL);
   
   mid_but_pin.setPinMode();
   lhs_but_pin.setPinMode();
@@ -121,13 +103,10 @@ void setup() {   // put your setup code here, to run once:
   shiftOutDOsPort1.doStartUpActions();
   shiftOutDOsPort2.doStartUpActions();
 
-  arr16[16] = '\0'; arr8[8] = '\0';
-  ucg.begin(UCG_FONT_MODE_SOLID);
-  ucg.setRotate270();
-  ucg.setColor(1, 0, 0, 0);        // Background color: Black (R,G,B)
-  ucg.setColor(0, 255, 255, 255);  // Text color: White (R,G,B)
+  tftST7735.begin();
+  buzzer.begin();
 
-  if(erase_eeprom_if_req(EEPROM_ADDR_MEMORY_VALID_STRING)){
+  if(EEPROM_Functions::erase_eeprom_if_req(EEPROM_ADDR_MEMORY_VALID_STRING)){
     levelSensor1.storeDfltCalParameters();
     levelSensor2.storeDfltCalParameters();
     storeDfltBeepSettings();
@@ -142,10 +121,9 @@ void setup() {   // put your setup code here, to run once:
   
   displayHomePage(fullPage); blinkLEDsInSeq();
 
-  setupTimer1(); enableTimer1(); setupTimer2(); enableTimer2();
+  ArduinoTimersFunctions::setupTimer1(); ArduinoTimersFunctions::enableTimer1();
+  ArduinoTimersFunctions::setupTimer2(); ArduinoTimersFunctions::enableTimer2();
   tik_main_loop_cycle.force_Gen_Tick();
-  
-  //wdt_enable(WDTO_8S);
 }
 // ------------------------------------------------------ loop --------------------------------------------------------
 void loop() {
@@ -159,7 +137,7 @@ void loop() {
 
   if(deviceMode == masterMode && currPage == dashBoardPage){
     while(!tik_main_loop_cycle.tick_Utilize()){
-      actionOnButtonPress(ButtonTimer2Based::pinButtPressed); //MACRO_BUTT_SCANS();
+      actionOnButtonPress(ButtonTimer2Based::pinButtPressed); 
     }
   }
 
@@ -168,7 +146,7 @@ void loop() {
     slaveModeMainLoopTimer.start_finOneShot(MAIN_LOOP_CYCLE_PERIOD-500);
   }
 
-  actionOnButtonPress(ButtonTimer2Based::pinButtPressed); //MACRO_BUTT_SCANS();
+  actionOnButtonPress(ButtonTimer2Based::pinButtPressed);
   
   if(deviceMode == masterMode && currPage == dashBoardPage)
     levelsPercentageFloat[0] = levelSensor1.getTankLevelPercent();
@@ -177,7 +155,7 @@ void loop() {
     if(tank1.getStartAlarmOrder()) tank1AlarmOnOff.start(numBeepsOnAlarm);
     if(tank1.getStopAlarmOrder()) tank1AlarmOnOff.stop();
   }
-  actionOnButtonPress(ButtonTimer2Based::pinButtPressed); //MACRO_BUTT_SCANS();
+  actionOnButtonPress(ButtonTimer2Based::pinButtPressed);
   
   if(deviceMode == masterMode && currPage == dashBoardPage){
     levelsPercentageFloat[1] = levelSensor2.getTankLevelPercent();
@@ -187,7 +165,7 @@ void loop() {
     if(tank2.getStartAlarmOrder()) tank2AlarmOnOff.start(numBeepsOnAlarm);
     if(tank2.getStopAlarmOrder()) tank2AlarmOnOff.stop();
   }
-  actionOnButtonPress(ButtonTimer2Based::pinButtPressed); //MACRO_BUTT_SCANS();
+  actionOnButtonPress(ButtonTimer2Based::pinButtPressed);
 
   if(deviceMode == masterMode && currPage == dashBoardPage){
     convertLevelsToChar_And_Transmit();
@@ -200,7 +178,7 @@ void loop() {
 
   if(deviceMode == slaveMode && currPage == dashBoardPage){
     while(!slaveModeMainLoopTimer.event()){
-      actionOnButtonPress(ButtonTimer2Based::pinButtPressed); //MACRO_BUTT_SCANS();
+      actionOnButtonPress(ButtonTimer2Based::pinButtPressed);
     } // while
   }
 

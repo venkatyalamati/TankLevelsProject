@@ -1,5 +1,5 @@
 #include "CustomClasses.h"
-// Note:- Do not use delay(), Serial.print() etc. inside the constructor
+// Note:- Do not use delay(), Serial.print(), setPinMode() etc. inside the constructor
   
   // Tank class implementations
   Tank::Tank(int16_t eepromStartAddr){
@@ -9,15 +9,15 @@
     _beepForMidLvlChanges = false;
   }
   void Tank::doStartUpActions(){
-    for(int i=0; i<8; i++)
+    for(uint8_t i=0; i<8; i++)
       ledStatus[i] = 0;
     _prevLevelStatus = update_ledStatus_getLevelStatus();
     _prevAlarmStatus = EEPROM.read(_eepromStartAddr);
   }
   void Tank::actionsOnLevel(float levelPercentage){ // -------------- ACTION BASED ON LEVELS RECEIVED FROM SENSORS -------------
     _levelPercentage = levelPercentage;
-
-    ledStatus[0] = 0;
+    if(_prevAlarmStatus != alarmNotReq)
+      ledStatus[0] = 0;
     // incase of low level alarm was started, previously made ledStatus[0]=1 (for blinking purpose) leads to _levelStatus as '1'
     
     _levelStatus = update_ledStatus_getLevelStatus();
@@ -34,7 +34,7 @@
         _alarmStatus = alarmStarted;
       }
     }
-    else{ // middle level
+    else{ // middle levels
       if(_prevAlarmStatus == alarmStarted){
         _stopAlarmOrder = true;
       }
@@ -42,17 +42,15 @@
       if(_prevLevelStatus != _levelStatus)
         _beepForMidLvlChanges = true;
     }
-    _prevLevelStatus = _levelStatus;
 
-    if(_alarmStatus != _prevAlarmStatus){
+    if(_alarmStatus != _prevAlarmStatus && _alarmStatus != alarmStarted){
       EEPROM.put(_eepromStartAddr, _alarmStatus);
-      delay(10);
     }
 
     if(_alarmStatus == alarmStarted){
       ledStatus[0] = 1; // if low level alarm started, this must be done for blinking the bottom led
     }
-  
+    _prevLevelStatus = _levelStatus;
     _prevAlarmStatus = _alarmStatus;
     
   } // actionsOnLevel ends

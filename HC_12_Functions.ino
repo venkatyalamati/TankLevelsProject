@@ -27,11 +27,11 @@ void receiveCharLevels_And_Convert(){ //Rx: -28.57-28.57
       if(ch == '\n' && j == (bufferSize-1)){ // bcz, after storing '\n' at 'bufferSize-2', 'j' will be incremented
         for(uint8_t i=0; i<7; i++) levelsPercentageChar[i] = '\0';
         for(uint8_t i=0; i<6; i++) levelsPercentageChar[i] = buffer[i];
-        levelsPercentageFloat[0] = floatFromCharArray(levelsPercentageChar);
+        levelsPercentageFloat[0] = DecimalToCharFunctions::floatFromCharArray(levelsPercentageChar);
 
         for(uint8_t i=0; i<7; i++) levelsPercentageChar[i] = '\0';
         for(uint8_t i=0; i<6; i++) levelsPercentageChar[i] = buffer[i+6];
-        levelsPercentageFloat[1] = floatFromCharArray(levelsPercentageChar);
+        levelsPercentageFloat[1] = DecimalToCharFunctions::floatFromCharArray(levelsPercentageChar);
 
         if(currPage == noSgnlRcvdPage){
           displayHomePage(fullPage);
