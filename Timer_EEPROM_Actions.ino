@@ -5,7 +5,7 @@
     buzzer.timedTurnOff();
     returnHomeScreenTimer.update(); charReceiveMainTimer.update(); charReceiveSubTimer.update(); slaveModeMainLoopTimer.update();
 
-    if(tik_1000ms.tick_Gen_Run()){ //tik_ms tasks must be kept in increasing order of milli sec's
+    if(tik_1000ms.tick_Gen_Run()){
       LED_Num_Cir_Cnt.incrCnt();
       if(!tank1.isAlarmInProgress() && !tank2.isAlarmInProgress()){
         if(tank1.beepForMidLvlChanges() || tank2.beepForMidLvlChanges()){

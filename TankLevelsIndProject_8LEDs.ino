@@ -41,8 +41,9 @@ enum diplayPages : uint8_t {fullPage, updtValues}; enum deviceModes : uint8_t {m
 
 TFTDisplay tftST7735(10, 9);
 
-Ticks tik_800ms(800); Ticks tik_1600ms(1600); Ticks tik_1000ms(1000); Ticks tik_main_loop_cycle(MAIN_LOOP_CYCLE_PERIOD);
+Ticks tik_1000ms(1000); Ticks tik_main_loop_cycle(MAIN_LOOP_CYCLE_PERIOD);
 Buzzer buzzer(A5);
+
 NonBlockingTimer returnHomeScreenTimer;
 NonBlockingTimer charReceiveMainTimer;
 NonBlockingTimer charReceiveSubTimer;
@@ -65,9 +66,7 @@ CircularCounter LED_Num_Cir_Cnt(8); // for 8 No's LEDs
 navigations currPage; deviceModes deviceMode;
 
 float levelsPercentageFloat[2]; uint8_t tankSel, numBeepsOnAlarm, beepLenMidLvl;
-char levelsPercentageChar[7];
-
-char buffer[bufferSize];
+char levelsPercentageChar[7]; char buffer[bufferSize];
 
 // Here the compiler allocating actual memory for the static variables. This is allowed even for private scope variables of the class.
 // static keyword only in declaration inside class — never repeat it in definition outside class.
