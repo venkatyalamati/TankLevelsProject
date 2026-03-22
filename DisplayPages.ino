@@ -10,6 +10,7 @@ int intLevel;
       strcpy_P(tftST7735.charBuffer, (PGM_P)F("LEVELS-S")); tftST7735.textPrintBigFont(1);
       clearSerialBuffer(); // fullPage and slave mode
     }
+    tik_main_loop_cycle.genTickNow();
   }
   // ----------- 1st Tank ------------------ 
     strcpy_P(tftST7735.charBuffer, (PGM_P)F("T-1 000%"));

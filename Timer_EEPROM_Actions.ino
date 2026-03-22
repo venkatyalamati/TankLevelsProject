@@ -5,7 +5,7 @@
     buzzer.timedTurnOff();
     returnHomeScreenTimer.update(); charReceiveMainTimer.update(); charReceiveSubTimer.update(); slaveModeMainLoopTimer.update();
 
-    if(tik_1000ms.tick_Gen_Run()){
+    if(tik_1000ms.runTickGen()){
       LED_Num_Cir_Cnt.incrCnt();
       if(!tank1.isAlarmInProgress() && !tank2.isAlarmInProgress()){
         if(tank1.beepForMidLvlChanges() || tank2.beepForMidLvlChanges()){
@@ -18,7 +18,7 @@
     tank2AlarmOnOff.executor(tank2_alarm_On_action, tank2_alarm_Off_action, tank2_alarm_fin_action);
 
     if(deviceMode == masterMode && currPage == dashBoardPage)
-      tik_main_loop_cycle.tick_Gen_Run();
+      tik_main_loop_cycle.runTickGen();
 
   } // ISR(TIMER1_COMPA_vect) ends
 

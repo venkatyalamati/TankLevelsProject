@@ -122,7 +122,7 @@ void setup() {   // put your setup code here, to run once:
 
   ArduinoTimersFunctions::setupTimer1(); ArduinoTimersFunctions::enableTimer1();
   ArduinoTimersFunctions::setupTimer2(); ArduinoTimersFunctions::enableTimer2();
-  tik_main_loop_cycle.force_Gen_Tick();
+  
 }
 // ------------------------------------------------------ loop --------------------------------------------------------
 void loop() {
@@ -135,7 +135,7 @@ void loop() {
   }
 
   if(deviceMode == masterMode && currPage == dashBoardPage){
-    while(!tik_main_loop_cycle.tick_Utilize()){
+    while(!tik_main_loop_cycle.tickUtilize()){
       actionOnButtonPress(ButtonTimer2Based::pinButtPressed); 
     }
   }
